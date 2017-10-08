@@ -19,6 +19,9 @@ If you want plugins, run this command: `echo "sentry-plugins" >> requirements.tx
 #### Building
 Run `make build` to build the Sentry Docker image
 
+#### Getting the Secret Key
+Run `docker run --rm sentry-onpremise config generate-secret-key` and copy the key somewhere.
+
 ### Dokku time!
 
 Now it's time to create the Sentry app in Dokku, run `dokku apps:create sentry` to create it.  
@@ -69,6 +72,8 @@ SENTRY_REDIS_HOST=dokku-redis-sentry-redis \
 SENTRY_REDIS_PORT=6379 \
 SENTRY_REDIS_PASSWORD=<redis password> \
 SENTRY_REDIS_DB=0 \
+SENTRY_SECRET_KEY=<sentry secret key>
 ```
+_You copied the secret key earlier, if you lost it, generate a new one_
 
 After this is done you have the base app setup, apart from some more required configuration.
