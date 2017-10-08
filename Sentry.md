@@ -13,49 +13,62 @@ This will create a folder in your home folder, enters the folder, clones the rep
 mkdir ~/sentry-guide && cd ~/sentry-guide && git clone https://github.com/getsentry/onpremise.git && cd onpremise
 ```
 
+#### Plugins
 If you want plugins, run this command: `echo "sentry-plugins" >> requirements.txt`
-Now it's time to run `make build` to build the Sentry Docker image
+
+#### Building
+Run `make build` to build the Sentry Docker image
 
 ### Dokku time!
 
-Now it's time to create the Sentry app in Dokku, run `dokku apps:create sentry` to create it.
-
-Let's add the dependent services!
+Now it's time to create the Sentry app in Dokku, run `dokku apps:create sentry` to create it.  
+After this is done we'll add the dependent services.
+Take note of the `<password>` parts.
 
 #### Postgres
+
 Time to create a Postgres service.  
 Run the following command to create it!
 ```
 dokku postgres:create sentry-db && dokku postgres:link sentry-db sentry
 ```
-Start with the `DATABASE_URL`, if you're following this guide to the dot it looks like this:
+If you're following this guide to the dot you should see this:
 ```
-postgres://postgres:<password>@dokku-postgres-sentry-db:5432/sentry_db
+DATABASE_URL: postgres://postgres:<password>@dokku-postgres-sentry-db:5432/sentry_db
 ```
-_except for `<password>` of course..._
+_except for `<password>` of course, it'll be the actual password..._
 
-This called a DSN, and it's structured like this.  
-Usually this is used for databases, but redis has an unofficial one too.
+#### Redis
+
+And now the Redis service.  
+Run the following command to create it.
+
 ```
-service://<user>:<password>@<host>:<port>/<database name>
+dokku redis:create sentry-redis && dokku redis:link sentry-redis sentry
+```
+If you're following this guide to the dot you should see this:
+```
+REDIS_URL: redis://sentry-redis:<password>@dokku-redis-sentry-redis:6379
 ```
 
-- For Redis, run `dokku redis:create sentry-redis && dokku redis:link sentry-redis sentry`
-
-_Take note of the `DATABASE_URL` and the `REDIS_URL`, we'll use them to configure Sentry_
 
 
-### Sentry Configuration
+### Base Sentry Configuration
+To set up the Database and Redis, copy the text below and run `nano ~/sentry-db-redis-setup.sh`.  
+Make sure to edit all the values surrounded by `<` and `>`  
+Paste it into nano and save the file, then run `chmod +x ~/sentry-db-redis-setup.sh && ./sentry-db-redis-setup.sh` to run it.
 
 ```
 dokku config:set sentry \
 SENTRY_POSTGRES_HOST=dokku-postgres-sentry-db \
 SENTRY_POSTGRES_PORT=5432 \
 SENTRY_DB_USER=postgres \
-SENTRY_DB_PASSWORD=<password> \
-SENTRY_DB_NAME=sentry_db
+SENTRY_DB_PASSWORD=<database password> \
+SENTRY_DB_NAME=sentry_db \
+SENTRY_REDIS_HOST=dokku-redis-sentry-redis \
+SENTRY_REDIS_PORT=6379 \
+SENTRY_REDIS_PASSWORD=<redis password> \
+SENTRY_REDIS_DB=0 \
 ```
 
-_Don't forget to replace `<password>` with the actual passwords!_
-
-And of course, we have to generate the secret key for sentry! Run `docker run --rm sentry-onpremise config generate-secret-key`
+After this is done you have the base app setup, apart from some more required configuration.
